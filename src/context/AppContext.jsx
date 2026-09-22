@@ -16,6 +16,7 @@ function loadState() {
 function saveState(state) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      user: state.user,
       tickets: state.tickets,
       notifications: state.notifications,
       registeredCustomers: state.registeredCustomers,
@@ -26,11 +27,18 @@ function saveState(state) {
 export function AppProvider({ children }) {
   const saved = loadState();
 
-  const [user, setUser] = useState(null); // { type: 'customer' | 'agent', data: {...} }
+  const [user, setUser] = useState(saved?.user || null); // { type: 'customer' | 'agent', data: {...} }
 
-  // If saved tickets don't have confidence data, regenerate AI analysis
   const initTickets = (() => {
-    const raw = saved?.tickets || initialMockTickets;
+    let raw = saved?.tickets || initialMockTickets;
+    
+    // Add any missing mock tickets (for when we expand the mock dataset)
+    if (raw.length < initialMockTickets.length) {
+      const existingIds = new Set(raw.map(t => t.id));
+      const newTickets = initialMockTickets.filter(t => !existingIds.has(t.id));
+      raw = [...raw, ...newTickets];
+    }
+
     const needsRegeneration = raw.some(t => t.aiAnalysis && !t.aiAnalysis.confidence);
     if (needsRegeneration) {
       raw.forEach(t => {
@@ -47,8 +55,8 @@ export function AppProvider({ children }) {
 
   // Save state changes
   useEffect(() => {
-    saveState({ tickets, notifications, registeredCustomers });
-  }, [tickets, notifications, registeredCustomers]);
+    saveState({ user, tickets, notifications, registeredCustomers });
+  }, [user, tickets, notifications, registeredCustomers]);
 
   // ========== AUTH ==========
   const login = useCallback((type, credentials) => {

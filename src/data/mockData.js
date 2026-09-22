@@ -561,6 +561,61 @@ export const initialMockTickets = [
   },
 ];
 
+// Generate extra tickets to increase dataset availability to ~100
+const extraSubjects = [
+  { c: 'Delivery', s: 'Package marked delivered but not received', d: 'My tracking says delivered, but I have not received anything. I need this urgently.' },
+  { c: 'Payment', s: 'Card declined repeatedly', d: 'I am trying to pay but my card keeps getting declined despite having sufficient funds.' },
+  { c: 'Account', s: 'Email change request', d: 'I need to change my registered email address. The option is not working.' },
+  { c: 'Technical', s: 'Website completely down', d: 'The website is not loading at all. I keep getting a 500 error.' },
+  { c: 'Refund', s: 'Partial refund received', d: 'I returned two items but only received a refund for one.' },
+  { c: 'Product', s: 'Missing parts in box', d: 'The product arrived but is missing the power adapter and cables.' },
+  { c: 'Payment', s: 'Unrecognized charge', d: 'There is a charge on my bank statement that I do not recognize. Please refund this.' },
+  { c: 'Delivery', s: 'Wrong address delivered', d: 'The courier delivered my package to the wrong building. Please find and deliver to correct address.' },
+  { c: 'Technical', s: 'Cannot apply promo code', d: 'I am trying to use a discount code but the system keeps throwing an error message.' },
+  { c: 'Account', s: 'Account suspended for no reason', d: 'My account was suddenly suspended and I dont know why. I have orders pending.' }
+];
+
+let extraCount = 13;
+// Seeded PRNG for consistent mock data across reloads
+function seededRandom(seed) {
+  var x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+let seed = 42;
+while (initialMockTickets.length < 100) {
+  const r1 = seededRandom(seed++);
+  const customer = mockCustomers[Math.floor(r1 * mockCustomers.length)];
+  const r2 = seededRandom(seed++);
+  const template = extraSubjects[Math.floor(r2 * extraSubjects.length)];
+  const r3 = seededRandom(seed++);
+  const daysAgo = Math.floor(r3 * 30);
+  const date = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+  const r4 = seededRandom(seed++);
+  const r5 = seededRandom(seed++);
+  
+  initialMockTickets.push({
+    id: `ST-2026-${1000 + extraCount}`,
+    customerId: customer.id,
+    customerName: customer.name,
+    subject: template.s,
+    description: template.d,
+    category: template.c,
+    orderId: `ORD-${80000 + Math.floor(r4 * 10000)}`,
+    createdAt: date,
+    updatedAt: date,
+    status: ['Open', 'In Progress', 'Resolved', 'Closed'][Math.floor(r5 * 4)],
+    assignedTeam: null,
+    assignedAgent: null,
+    agentResponse: null,
+    resolution: null,
+    contactMethod: ['email', 'phone', 'chat'][Math.floor(seededRandom(seed++) * 3)],
+    priority: null, 
+    aiAnalysis: null,
+  });
+  extraCount++;
+}
+
 // Generate AI analysis for all initial tickets
 initialMockTickets.forEach(ticket => {
   ticket.aiAnalysis = generateAIAnalysis(ticket, initialMockTickets);
